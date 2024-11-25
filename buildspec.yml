@@ -1,13 +1,21 @@
 version: 0.2
+
 phases:
   install:
     runtime-versions:
       python: 3.9
     commands:
+      - echo Installing dependencies...
       - pip install -r requirements.txt
   build:
     commands:
-      - python app.py
+      - echo Starting the Flask app with Gunicorn...
+      - gunicorn -b 0.0.0.0:5000 app:app
 artifacts:
   files:
     - '**/*'
+  baseDirectory: .  # Optional: Adjust the base directory if needed
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
