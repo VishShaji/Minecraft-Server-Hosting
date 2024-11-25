@@ -6,7 +6,7 @@ const Login = () => {
       <h2>Login</h2>
       <p>Please sign in to your account</p>
       <button
-        onClick={() => window.location.href = 'https://ap-south-1squnbxjqf.auth.ap-south-1.amazoncognito.com/login?client_id=3h790bho4eq9je3ofgeuih854b&response_type=code&scope=email+openid+phone&redirect_uri=https://staging.d3bsnga2fhi5b6.amplifyapp.com/callback'}
+        onClick={() => window.location.href = 'https://ap-south-1squnbxjqf.auth.ap-south-1.amazoncognito.com/login?client_id=3h790bho4eq9je3ofgeuih854b&response_type=code&scope=email+openid+phone&redirect_uri=https://master.d22iypo0elndm1.amplifyapp.com/callback'}
         style={{
           padding: '10px 20px',
           backgroundColor: '#007bff',
