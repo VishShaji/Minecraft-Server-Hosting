@@ -5,7 +5,7 @@ import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   useEffect(() => {
     // Check if the user is logged in by verifying the session (or tokens)
