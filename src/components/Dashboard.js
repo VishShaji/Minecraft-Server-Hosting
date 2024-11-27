@@ -1,135 +1,148 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { get, post } from '@aws-amplify/api';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 function Dashboard() {
   const { user } = useAuth();
-  const [serverStatus, setServerStatus] = useState('not_assigned');
-  const [serverIp, setServerIp] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [serverStatus, setServerStatus] = useState('loading');
+  const [serverIp, setServerIp] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+
+  const fetchServerStatus = async () => {
+    try {
+      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch server status');
+      
+      const data = await response.json();
+      setServerStatus(data.server_status);
+      setServerIp(data.server_ip);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching server status:', err);
+      setError('Failed to fetch server status');
+    }
+  };
 
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-    } else {
+    if (user) {
       fetchServerStatus();
       const interval = setInterval(fetchServerStatus, 10000);
       return () => clearInterval(interval);
     }
-  }, [user, navigate]);
+  }, [user]);
 
-  async function fetchServerStatus() {
+  const handleStartServer = async () => {
+    setIsLoading(true);
     try {
-      const response = await get({
-        apiName: 'api',
-        path: '/dashboard',
-        options: {
-          headers: {
-            Authorization: `Bearer ${user.accessToken}`
-          }
+      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/start-server', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      setServerStatus(response.server_status.toUpperCase());
-      setServerIp(response.server_ip || '');
-      setError(null);
-    } catch (error) {
-      console.error('Error fetching server status:', error);
-      setError('Failed to fetch server status. Please try again.');
-    }
-    setLoading(false);
-  }
-
-  async function handleStartStop() {
-    setLoading(true);
-    try {
-      const endpoint = serverStatus === 'RUNNING' ? '/stop-server' : '/start-server';
-      await post({
-        apiName: 'api',
-        path: endpoint,
-        options: {
-          headers: {
-            Authorization: `Bearer ${user.accessToken}`
-          }
-        }
-      });
+      if (!response.ok) throw new Error('Failed to start server');
       
-      // Update status immediately for better UX
-      setServerStatus(serverStatus === 'RUNNING' ? 'STOPPING' : 'STARTING');
+      setServerStatus('starting');
       setError(null);
-      
-      // Fetch the actual status after a short delay
-      setTimeout(fetchServerStatus, 2000);
-    } catch (error) {
-      console.error('Error managing server:', error);
-      setError('Failed to manage server. Please try again.');
-    }
-    setLoading(false);
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const getStatusDisplay = (status) => {
-    switch (status.toLowerCase()) {
-      case 'not_assigned':
-        return 'NOT ASSIGNED';
-      case 'not_found':
-        return 'NOT FOUND';
-      default:
-        return status;
+    } catch (err) {
+      console.error('Error starting server:', err);
+      setError('Failed to start server');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const canStartStop = !['STARTING', 'STOPPING'].includes(serverStatus) && 
-                      serverStatus !== 'not_found';
+  const handleStopServer = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/stop-server', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to stop server');
+      
+      setServerStatus('stopping');
+      setError(null);
+    } catch (err) {
+      console.error('Error stopping server:', err);
+      setError('Failed to stop server');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
-    <div className="dashboard">
-      <h2>Minecraft Server Dashboard</h2>
-      {error && <div className="error-message">{error}</div>}
-      
-      <div className="status-container">
-        <h3>Server Status</h3>
-        <p>Status: <span className={`status ${serverStatus.toLowerCase()}`}>
-          {getStatusDisplay(serverStatus)}
-        </span></p>
-        {serverIp && <p>Server IP: <strong>{serverIp}</strong></p>}
+    <div className="min-h-screen bg-gray-100 py-12">
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-6">Server Dashboard</h1>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <div className="bg-gray-50 p-6 rounded-lg mb-6">
+            <h2 className="text-xl font-semibold mb-4">Server Status</h2>
+            <div className="flex items-center space-x-4">
+              <div className={`h-3 w-3 rounded-full ${
+                serverStatus === 'RUNNING' ? 'bg-green-500' :
+                serverStatus === 'TERMINATED' ? 'bg-red-500' :
+                'bg-yellow-500'
+              }`}></div>
+              <span className="text-lg capitalize">{serverStatus.toLowerCase()}</span>
+            </div>
+            
+            {serverIp && (
+              <div className="mt-4">
+                <p className="text-gray-600">Server IP:</p>
+                <code className="bg-gray-100 px-2 py-1 rounded">{serverIp}</code>
+              </div>
+            )}
+          </div>
+
+          <div className="flex space-x-4">
+            <button
+              onClick={handleStartServer}
+              disabled={isLoading || serverStatus === 'RUNNING' || serverStatus === 'starting'}
+              className={`px-6 py-2 rounded-lg font-semibold text-white ${
+                isLoading || serverStatus === 'RUNNING' || serverStatus === 'starting'
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-700'
+              }`}
+            >
+              Start Server
+            </button>
+            
+            <button
+              onClick={handleStopServer}
+              disabled={isLoading || serverStatus === 'TERMINATED' || serverStatus === 'stopping'}
+              className={`px-6 py-2 rounded-lg font-semibold text-white ${
+                isLoading || serverStatus === 'TERMINATED' || serverStatus === 'stopping'
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              Stop Server
+            </button>
+          </div>
+        </div>
       </div>
-
-      {!loading && serverStatus !== 'not_found' && (
-        <button
-          className="primary"
-          onClick={handleStartStop}
-          disabled={!canStartStop}
-        >
-          {serverStatus === 'RUNNING' ? 'Stop Server' : 'Start Server'}
-        </button>
-      )}
-
-      {serverStatus === 'RUNNING' && serverIp && (
-        <div className="server-info">
-          <h3>Connection Information</h3>
-          <p>To connect to your Minecraft server:</p>
-          <ol>
-            <li>Open Minecraft Java Edition</li>
-            <li>Click "Multiplayer"</li>
-            <li>Click "Add Server"</li>
-            <li>Enter the Server IP: <strong>{serverIp}</strong></li>
-            <li>Click "Done" and select your server from the list</li>
-          </ol>
-        </div>
-      )}
-
-      {serverStatus === 'not_assigned' && (
-        <div className="server-info">
-          <p>Click "Start Server" to create your first Minecraft server instance.</p>
-        </div>
-      )}
     </div>
   );
 }
