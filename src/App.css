@@ -1,0 +1,82 @@
+.App {
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+nav ul {
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+}
+
+nav ul li {
+  margin-right: 20px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+.profile span {
+  margin-right: 10px;
+}
+
+main {
+  padding: 20px 0;
+}
+
+.home, .dashboard, .faq {
+  text-align: center;
+}
+
+.cta-button {
+  display: inline-block;
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.server-status {
+  margin: 20px 0;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
+  text-align: center;
+}
+
+footer nav ul {
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
