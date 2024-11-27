@@ -4,6 +4,11 @@ const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
+const API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
+const COGNITO_DOMAIN = process.env.REACT_APP_COGNITO_DOMAIN;
+const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,7 +22,7 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/check-auth', {
+      const response = await fetch(`${API_ENDPOINT}/check-auth`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -44,18 +49,28 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = () => {
-    window.location.href = 'https://ap-south-1squnbxjqf.auth.ap-south-1.amazoncognito.com/login?client_id=3h790bho4eq9je3ofgeuih854b&response_type=code&scope=email+openid+phone&redirect_uri=https%3A%2F%2Fmaster.d22iypo0elndm1.amplifyapp.com%2Fcallback';
+    const loginUrl = `${COGNITO_DOMAIN}/login?` + new URLSearchParams({
+      client_id: CLIENT_ID,
+      response_type: 'code',
+      scope: 'email openid phone',
+      redirect_uri: REDIRECT_URI
+    });
+    window.location.href = loginUrl;
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    window.location.href = 'https://ap-south-1squnbxjqf.auth.ap-south-1.amazoncognito.com/logout?client_id=3h790bho4eq9je3ofgeuih854b&logout_uri=https%3A%2F%2Fmaster.d22iypo0elndm1.amplifyapp.com';
+    const logoutUrl = `${COGNITO_DOMAIN}/logout?` + new URLSearchParams({
+      client_id: CLIENT_ID,
+      logout_uri: REDIRECT_URI.split('/callback')[0]
+    });
+    window.location.href = logoutUrl;
   };
 
   const handleCallback = async (code) => {
     try {
-      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/token', {
+      const response = await fetch(`${API_ENDPOINT}/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

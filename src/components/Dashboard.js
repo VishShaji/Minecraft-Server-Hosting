@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
+const API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
+
 function Dashboard() {
   const { user } = useAuth();
   const [serverStatus, setServerStatus] = useState('loading');
@@ -14,12 +16,12 @@ function Dashboard() {
   const fetchServerStatus = async () => {
     try {
       const [instanceResponse, serverStatusResponse] = await Promise.all([
-        fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/dashboard', {
+        fetch(`${API_ENDPOINT}/dashboard`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }),
-        fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/server-status', {
+        fetch(`${API_ENDPOINT}/server-status`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -54,7 +56,7 @@ function Dashboard() {
   const handleStartServer = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/start-server', {
+      const response = await fetch(`${API_ENDPOINT}/start-server`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -76,7 +78,7 @@ function Dashboard() {
   const handleStopServer = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/stop-server', {
+      const response = await fetch(`${API_ENDPOINT}/stop-server`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
