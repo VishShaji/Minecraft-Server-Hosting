@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
+import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession, AuthError } from '@aws-amplify/auth';
 import { Hub } from '@aws-amplify/core';
 
 const AuthContext = createContext();
@@ -15,9 +15,9 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     checkUser();
-
-    // Listen for auth events
+    
     const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      console.log('Auth event:', payload.event);
       switch (payload.event) {
         case 'signedIn':
           checkUser();
@@ -25,12 +25,8 @@ export function AuthProvider({ children }) {
         case 'signedOut':
           setUser(null);
           break;
-        case 'tokenRefresh':
-          checkUser();
-          break;
-        case 'tokenRefresh_failure':
-          setError('Session expired. Please login again.');
-          setUser(null);
+        case 'customOAuthState':
+          console.log('Custom OAuth State:', payload.data);
           break;
         default:
           break;
@@ -44,35 +40,28 @@ export function AuthProvider({ children }) {
     try {
       const userData = await getCurrentUser();
       const session = await fetchAuthSession();
-      const { accessToken, idToken } = session.tokens ?? {};
       
       setUser({
         ...userData,
-        username: userData.username,
-        email: userData.signInDetails?.loginId,
-        accessToken: accessToken?.toString(),
-        idToken: idToken?.toString()
+        accessToken: session.tokens?.accessToken?.toString(),
+        idToken: session.tokens?.idToken?.toString()
       });
       setError(null);
     } catch (error) {
-      if (error.message !== 'No current user') {
+      if (!(error instanceof AuthError && error.name === 'UserUnauthorizedException')) {
         console.error('Auth error:', error);
       }
       setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function login() {
     try {
       setError(null);
-      await signInWithRedirect({
-        provider: 'Cognito',
-        options: {
-          redirectSignIn: window.location.origin + '/callback',
-          redirectSignOut: window.location.origin
-        }
-      });
+      console.log('Starting login redirect...');
+      await signInWithRedirect();
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to login. Please try again.');
