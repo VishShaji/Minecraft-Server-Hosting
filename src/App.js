@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
 import Home from './components/Home';
@@ -11,7 +11,7 @@ import Callback from './components/Callback';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <BrowserRouter>
         <div className="App">
           <Header />
           <main>
@@ -25,10 +25,9 @@ function App() {
           </main>
           <Footer />
         </div>
-      </Router>
+      </BrowserRouter>
     </AuthProvider>
   );
 }
 
 export default App;
-

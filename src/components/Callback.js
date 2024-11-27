@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Auth } from '@aws-amplify/auth';
+import { getCurrentUser } from '@aws-amplify/auth';
 
 function Callback() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ function Callback() {
   useEffect(() => {
     async function handleCallback() {
       try {
-        await Auth.currentAuthenticatedUser();
+        await getCurrentUser();
         navigate('/dashboard');
       } catch (error) {
         console.error('Error during authentication:', error);
@@ -23,4 +23,3 @@ function Callback() {
 }
 
 export default Callback;
-
