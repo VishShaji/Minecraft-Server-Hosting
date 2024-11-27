@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession, AuthError } from '@aws-amplify/auth';
+import { signIn, signOut, getCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
 import { Hub } from '@aws-amplify/core';
 
 const AuthContext = createContext();
@@ -25,9 +25,6 @@ export function AuthProvider({ children }) {
         case 'signedOut':
           setUser(null);
           break;
-        case 'customOAuthState':
-          console.log('Custom OAuth State:', payload.data);
-          break;
         default:
           break;
       }
@@ -48,9 +45,7 @@ export function AuthProvider({ children }) {
       });
       setError(null);
     } catch (error) {
-      if (!(error instanceof AuthError && error.name === 'UserUnauthorizedException')) {
-        console.error('Auth error:', error);
-      }
+      console.error('Auth error:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,8 +55,8 @@ export function AuthProvider({ children }) {
   async function login() {
     try {
       setError(null);
-      console.log('Starting login redirect...');
-      await signInWithRedirect();
+      console.log('Starting login...');
+      await signIn();
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to login. Please try again.');
