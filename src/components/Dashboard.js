@@ -6,26 +6,40 @@ function Dashboard() {
   const { user } = useAuth();
   const [serverStatus, setServerStatus] = useState('loading');
   const [serverIp, setServerIp] = useState(null);
+  const [isServerRunning, setIsServerRunning] = useState(false);
+  const [serverMessage, setServerMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchServerStatus = async () => {
     try {
-      const response = await fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const [instanceResponse, serverStatusResponse] = await Promise.all([
+        fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }),
+        fetch('https://d6wrnrfjri.execute-api.ap-south-1.amazonaws.com/dev/server-status', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+      ]);
       
-      if (!response.ok) throw new Error('Failed to fetch server status');
+      if (!instanceResponse.ok) throw new Error('Failed to fetch instance status');
+      if (!serverStatusResponse.ok) throw new Error('Failed to fetch server status');
       
-      const data = await response.json();
-      setServerStatus(data.server_status);
-      setServerIp(data.server_ip);
+      const instanceData = await instanceResponse.json();
+      const serverData = await serverStatusResponse.json();
+      
+      setServerStatus(instanceData.server_status);
+      setServerIp(instanceData.server_ip);
+      setIsServerRunning(serverData.server_running);
+      setServerMessage(serverData.message);
       setError(null);
     } catch (err) {
-      console.error('Error fetching server status:', err);
-      setError('Failed to fetch server status');
+      console.error('Error fetching status:', err);
+      setError('Failed to fetch status');
     }
   };
 
@@ -99,21 +113,28 @@ function Dashboard() {
 
           <div className="bg-gray-50 p-6 rounded-lg mb-6">
             <h2 className="text-xl font-semibold mb-4">Server Status</h2>
-            <div className="flex items-center space-x-4">
-              <div className={`h-3 w-3 rounded-full ${
-                serverStatus === 'RUNNING' ? 'bg-green-500' :
-                serverStatus === 'TERMINATED' ? 'bg-red-500' :
-                'bg-yellow-500'
-              }`}></div>
-              <span className="text-lg capitalize">{serverStatus.toLowerCase()}</span>
-            </div>
-            
-            {serverIp && (
-              <div className="mt-4">
-                <p className="text-gray-600">Server IP:</p>
-                <code className="bg-gray-100 px-2 py-1 rounded">{serverIp}</code>
+            <div className="space-y-4">
+              <div>
+                <span className="font-medium">Instance Status: </span>
+                <span className={`capitalize ${serverStatus === 'running' ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {serverStatus}
+                </span>
               </div>
-            )}
+              
+              <div>
+                <span className="font-medium">Minecraft Server: </span>
+                <span className={`${isServerRunning ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {serverMessage}
+                </span>
+              </div>
+
+              {serverIp && (
+                <div>
+                  <span className="font-medium">Server IP: </span>
+                  <span className="font-mono">{serverIp}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex space-x-4">
