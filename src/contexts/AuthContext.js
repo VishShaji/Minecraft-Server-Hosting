@@ -5,9 +5,13 @@ const AuthContext = createContext({});
 export const useAuth = () => useContext(AuthContext);
 
 const API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
-const COGNITO_DOMAIN = process.env.REACT_APP_COGNITO_DOMAIN;
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
+
+// Ensure proper format for Cognito domain
+const REGION = 'ap-south-1';
+const USER_POOL_DOMAIN = 'ap-south-1squnbxjqf';
+const COGNITO_DOMAIN = `https://${USER_POOL_DOMAIN}.auth.${REGION}.amazoncognito.com`;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -49,23 +53,43 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = () => {
-    const loginUrl = `${COGNITO_DOMAIN}/login?` + new URLSearchParams({
-      client_id: CLIENT_ID,
-      response_type: 'code',
-      scope: 'email openid phone',
-      redirect_uri: REDIRECT_URI
-    });
-    window.location.href = loginUrl;
+    try {
+      // Ensure all parameters are defined
+      if (!COGNITO_DOMAIN || !CLIENT_ID || !REDIRECT_URI) {
+        console.error('Missing configuration:', { COGNITO_DOMAIN, CLIENT_ID, REDIRECT_URI });
+        return;
+      }
+
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: 'code',
+        scope: 'email openid phone',
+        redirect_uri: REDIRECT_URI
+      });
+
+      const loginUrl = `${COGNITO_DOMAIN}/oauth2/authorize?${params.toString()}`;
+      console.log('Redirecting to:', loginUrl);
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error('Login redirect failed:', error);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    const logoutUrl = `${COGNITO_DOMAIN}/logout?` + new URLSearchParams({
-      client_id: CLIENT_ID,
-      logout_uri: REDIRECT_URI.split('/callback')[0]
-    });
-    window.location.href = logoutUrl;
+    try {
+      localStorage.removeItem('token');
+      setUser(null);
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        logout_uri: REDIRECT_URI.split('/callback')[0]
+      });
+      window.location.href = `${COGNITO_DOMAIN}/oauth2/logout?${params.toString()}`;
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still clear local state even if redirect fails
+      localStorage.removeItem('token');
+      setUser(null);
+    }
   };
 
   const handleCallback = async (code) => {
