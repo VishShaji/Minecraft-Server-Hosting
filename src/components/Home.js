@@ -7,9 +7,14 @@ function Home() {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
+    console.log('Get Started clicked');
+    console.log('Current user:', user);
+    
     if (user) {
+      console.log('User exists, navigating to dashboard');
       navigate('/dashboard');
     } else {
+      console.log('No user, initiating login');
       login();
     }
   };

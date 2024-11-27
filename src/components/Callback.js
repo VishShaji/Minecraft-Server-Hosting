@@ -8,18 +8,32 @@ function Callback() {
 
   useEffect(() => {
     async function processCode() {
+      console.log('Processing callback...');
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      
+      console.log('URL parameters:', {
+        code: code ? 'Present' : 'Not present',
+        error: error || 'None'
+      });
       
       if (code) {
+        console.log('Exchanging code for token...');
         const success = await handleCallback(code);
         if (success) {
+          console.log('Token exchange successful, redirecting to dashboard');
           navigate('/dashboard');
         } else {
-          navigate('/login');
+          console.log('Token exchange failed, redirecting to login');
+          navigate('/');
         }
+      } else if (error) {
+        console.error('Auth error:', error);
+        navigate('/');
       } else {
-        navigate('/login');
+        console.log('No code or error present, redirecting to login');
+        navigate('/');
       }
     }
 

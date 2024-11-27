@@ -5,10 +5,10 @@ const AuthContext = createContext({});
 export const useAuth = () => useContext(AuthContext);
 
 const API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
-const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
+const CLIENT_ID = process.env.REACT_APP_CLIENT_ID || '3h790bho4eq9je3ofgeuih854b';
+const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'https://master.d22iypo0elndm1.amplifyapp.com/callback';
 
-// Ensure proper format for Cognito domain
+// Cognito configuration
 const REGION = 'ap-south-1';
 const USER_POOL_DOMAIN = 'ap-south-1squnbxjqf';
 const COGNITO_DOMAIN = `https://${USER_POOL_DOMAIN}.auth.${REGION}.amazoncognito.com`;
@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const response = await fetch(`${API_ENDPOINT}/check-auth`, {
+      const response = await fetch(`${API_ENDPOINT}/login`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -34,7 +34,12 @@ export function AuthProvider({ children }) {
       
       if (response.ok) {
         const data = await response.json();
-        setUser({ email: data.email });
+        if (data.success) {
+          setUser(data.user);
+        } else {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
       } else {
         localStorage.removeItem('token');
         setUser(null);
@@ -54,10 +59,8 @@ export function AuthProvider({ children }) {
 
   const login = () => {
     try {
-      // Ensure all parameters are defined
-      if (!COGNITO_DOMAIN || !CLIENT_ID || !REDIRECT_URI) {
-        console.error('Missing configuration:', { COGNITO_DOMAIN, CLIENT_ID, REDIRECT_URI });
-        return;
+      if (!CLIENT_ID || !REDIRECT_URI) {
+        throw new Error('Missing configuration');
       }
 
       const params = new URLSearchParams({
@@ -68,27 +71,36 @@ export function AuthProvider({ children }) {
       });
 
       const loginUrl = `${COGNITO_DOMAIN}/oauth2/authorize?${params.toString()}`;
-      console.log('Redirecting to:', loginUrl);
       window.location.href = loginUrl;
     } catch (error) {
-      console.error('Login redirect failed:', error);
+      console.error('Login failed:', error);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Call logout endpoint
+        await fetch(`${API_ENDPOINT}/logout`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    } finally {
+      // Clear local state regardless of server response
       localStorage.removeItem('token');
       setUser(null);
+      
+      // Redirect to Cognito logout
       const params = new URLSearchParams({
         client_id: CLIENT_ID,
         logout_uri: REDIRECT_URI.split('/callback')[0]
       });
       window.location.href = `${COGNITO_DOMAIN}/oauth2/logout?${params.toString()}`;
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Still clear local state even if redirect fails
-      localStorage.removeItem('token');
-      setUser(null);
     }
   };
 
