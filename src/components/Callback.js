@@ -3,22 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function Callback() {
+  const { handleCallback } = useAuth();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        navigate('/dashboard');
+    async function processCode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      
+      if (code) {
+        const success = await handleCallback(code);
+        if (success) {
+          navigate('/dashboard');
+        } else {
+          navigate('/login');
+        }
       } else {
-        navigate('/');
+        navigate('/login');
       }
     }
-  }, [user, loading, navigate]);
+
+    processCode();
+  }, [handleCallback, navigate]);
 
   return (
-    <div className="callback-container">
-      <p>Completing login...</p>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold mb-4">Authenticating...</h2>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+      </div>
     </div>
   );
 }

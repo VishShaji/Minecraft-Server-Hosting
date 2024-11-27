@@ -3,28 +3,44 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function Header() {
-  const { user, error, loading, login, logout } = useAuth();
+  const { user, login, logout } = useAuth();
 
   return (
-    <header>
-      <nav>
-        <ul>
-          <li><Link to="/">Home</Link></li>
-          {user && <li><Link to="/dashboard">Dashboard</Link></li>}
-          <li><Link to="/faq">FAQ</Link></li>
-        </ul>
-        <div className="auth-section">
-          {error && <div className="error-message">{error}</div>}
-          {loading ? (
-            <button className="primary" disabled>Loading...</button>
-          ) : user ? (
-            <div className="profile">
-              <span>{user.email || user.username}</span>
-              <button className="primary" onClick={logout}>Logout</button>
-            </div>
-          ) : (
-            <button className="primary" onClick={login}>Login</button>
-          )}
+    <header className="bg-gray-800 text-white">
+      <nav className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Link to="/" className="text-xl font-bold">
+              Minecraft Server Host
+            </Link>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <Link to="/faq" className="hover:text-gray-300">
+              FAQ
+            </Link>
+            {user ? (
+              <>
+                <Link to="/dashboard" className="hover:text-gray-300">
+                  Dashboard
+                </Link>
+                <button
+                  onClick={logout}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Logout
+                </button>
+                <span className="ml-4">{user.email}</span>
+              </>
+            ) : (
+              <button
+                onClick={login}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Login
+              </button>
+            )}
+          </div>
         </div>
       </nav>
     </header>
