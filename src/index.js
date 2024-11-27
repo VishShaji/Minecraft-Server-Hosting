@@ -12,6 +12,13 @@ Amplify.configure({
       userPoolClientId: '3h790bho4eq9je3ofgeuih854b',
       signUpConfig: {
         socialProviders: ['COGNITO']
+      },
+      oauth: {
+        domain: 'minecraft-server-hosting.auth.ap-south-1.amazoncognito.com',
+        scope: ['email', 'openid', 'profile'],
+        redirectSignIn: window.location.origin + '/callback',
+        redirectSignOut: window.location.origin,
+        responseType: 'code'
       }
     }
   },

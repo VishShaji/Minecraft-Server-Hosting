@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 import Callback from './components/Callback';
+import './App.css';
 
 function App() {
   return (

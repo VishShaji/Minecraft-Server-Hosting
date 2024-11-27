@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { signInWithRedirect, signOut, getCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
+import { Hub } from '@aws-amplify/core';
 
 const AuthContext = createContext();
 
@@ -14,6 +15,29 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     checkUser();
+
+    // Listen for auth events
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      switch (payload.event) {
+        case 'signedIn':
+          checkUser();
+          break;
+        case 'signedOut':
+          setUser(null);
+          break;
+        case 'tokenRefresh':
+          checkUser();
+          break;
+        case 'tokenRefresh_failure':
+          setError('Session expired. Please login again.');
+          setUser(null);
+          break;
+        default:
+          break;
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   async function checkUser() {
@@ -31,11 +55,10 @@ export function AuthProvider({ children }) {
       });
       setError(null);
     } catch (error) {
-      setUser(null);
       if (error.message !== 'No current user') {
-        setError('Session expired. Please login again.');
         console.error('Auth error:', error);
       }
+      setUser(null);
     }
     setLoading(false);
   }
@@ -43,10 +66,16 @@ export function AuthProvider({ children }) {
   async function login() {
     try {
       setError(null);
-      await signInWithRedirect();
+      await signInWithRedirect({
+        provider: 'Cognito',
+        options: {
+          redirectSignIn: window.location.origin + '/callback',
+          redirectSignOut: window.location.origin
+        }
+      });
     } catch (error) {
-      setError('Failed to login. Please try again.');
       console.error('Login error:', error);
+      setError('Failed to login. Please try again.');
     }
   }
 
@@ -56,8 +85,8 @@ export function AuthProvider({ children }) {
       await signOut();
       setUser(null);
     } catch (error) {
-      setError('Failed to logout. Please try again.');
       console.error('Logout error:', error);
+      setError('Failed to logout. Please try again.');
     }
   }
 

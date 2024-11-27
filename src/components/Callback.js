@@ -1,25 +1,26 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser } from '@aws-amplify/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 function Callback() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    async function handleCallback() {
-      try {
-        await getCurrentUser();
+    if (!loading) {
+      if (user) {
         navigate('/dashboard');
-      } catch (error) {
-        console.error('Error during authentication:', error);
+      } else {
         navigate('/');
       }
     }
+  }, [user, loading, navigate]);
 
-    handleCallback();
-  }, [navigate]);
-
-  return <div>Authenticating...</div>;
+  return (
+    <div className="callback-container">
+      <p>Completing login...</p>
+    </div>
+  );
 }
 
 export default Callback;
