@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { API } from 'aws-amplify';
+import { API } from '@aws-amplify/api';
+import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
   const { user } = useAuth();
   const [serverStatus, setServerStatus] = useState('OFFLINE');
   const [serverIp, setServerIp] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (!user) {
+      navigate('/');
+    } else {
       fetchServerStatus();
     }
-  }, [user]);
+  }, [user, navigate]);
 
   async function fetchServerStatus() {
     try {
@@ -42,7 +46,7 @@ function Dashboard() {
   }
 
   if (!user) {
-    return <div>Please log in to access the dashboard.</div>;
+    return null;
   }
 
   return (

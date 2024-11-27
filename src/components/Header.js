@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function Header() {
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
 
   return (
     <header>
@@ -20,7 +20,7 @@ function Header() {
           <button onClick={logout}>Logout</button>
         </div>
       ) : (
-        <Link to="/dashboard">Login</Link>
+        <button onClick={login}>Login</button>
       )}
     </header>
   );
